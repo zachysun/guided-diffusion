@@ -13,7 +13,7 @@ import torch.distributed as dist
 
 # Change this to reflect your cluster layout.
 # The GPU for a given rank is (rank % GPUS_PER_NODE).
-GPUS_PER_NODE = 8
+GPUS_PER_NODE = 1
 
 SETUP_RETRY_COUNT = 3
 
@@ -39,7 +39,9 @@ def setup_dist():
 
     port = comm.bcast(_find_free_port(), root=0)
     os.environ["MASTER_PORT"] = str(port)
-    dist.init_process_group(backend=backend, init_method="env://")
+    # dist.init_process_group(backend=backend, init_method="env://")
+    # if can't use nccl, use gloo
+    dist.init_process_group(backend='gloo', init_method='env://?use_libuv=False')
 
 
 def dev():
@@ -78,9 +80,18 @@ def sync_params(params):
     """
     Synchronize a sequence of Tensors across ranks from rank 0.
     """
+    # for p in params:
+    #     with th.no_grad():
+    #         dist.broadcast(p, 0)
     for p in params:
-        with th.no_grad():
-            dist.broadcast(p, 0)
+        if p.requires_grad:
+            p_data = p.data.clone()
+            with th.no_grad():
+                dist.broadcast(p_data, 0)
+            p.data.copy_(p_data)
+        else:
+            with th.no_grad():
+                dist.broadcast(p, 0)
 
 
 def _find_free_port():
