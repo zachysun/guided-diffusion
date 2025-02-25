@@ -6,7 +6,7 @@ This repository is based on [openai/improved-diffusion](https://github.com/opena
 
 ## Update(Fork Version)
 - Support in_channels, out_channels setting
-- Support gray image
+- Support gray image ('L' and 'F' mode in PIL)
 - Support Windows OS
 
 # Download pre-trained models

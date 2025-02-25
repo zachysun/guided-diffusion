@@ -72,7 +72,7 @@ def _list_image_files_recursively(data_dir):
     for entry in sorted(bf.listdir(data_dir)):
         full_path = bf.join(data_dir, entry)
         ext = entry.split(".")[-1]
-        if "." in entry and ext.lower() in ["jpg", "jpeg", "png", "gif"]:
+        if "." in entry and ext.lower() in ["jpg", "jpeg", "png", "gif", "tiff"]:
             results.append(full_path)
         elif bf.isdir(full_path):
             results.extend(_list_image_files_recursively(full_path))
@@ -107,6 +107,8 @@ class ImageDataset(Dataset):
             pil_image.load()
         if pil_image.mode == 'L':
             converted_image = pil_image
+        elif pil_image.mode == 'F':
+            converted_image = Image.fromarray((np.array(pil_image) * 255.0).round().astype(np.uint8))
         else:
             converted_image = pil_image.convert("RGB")
 
